@@ -1,9 +1,19 @@
 import json
 import websockets
 from feeds.shared import PRICES
-from feeds.config import COINS
 
-PAIR_MAP = {v["kraken"]: k for k, v in COINS.items()}
+PAIRS = {
+    "XBT/USD": "BTC",
+    "ETH/USD": "ETH",
+    "SOL/USD": "SOL",
+    "ADA/USD": "ADA",
+    "XRP/USD": "XRP",
+    "DOGE/USD": "DOGE",
+    "LINK/USD": "LINK",
+    "AVAX/USD": "AVAX",
+    "MATIC/USD": "MATIC",
+    "DOT/USD": "DOT",
+}
 
 async def run_kraken():
     uri = "wss://ws.kraken.com"
@@ -11,17 +21,13 @@ async def run_kraken():
     async with websockets.connect(uri) as ws:
         await ws.send(json.dumps({
             "event": "subscribe",
-            "pair": list(PAIR_MAP.keys()),
+            "pair": list(PAIRS),
             "subscription": {"name": "ticker"}
         }))
 
         while True:
             msg = json.loads(await ws.recv())
-
             if isinstance(msg, list):
-                pair = msg[-1]
-                coin = PAIR_MAP.get(pair)
-
+                coin = PAIRS.get(msg[-1])
                 if coin:
-                    price = float(msg[1]["c"][0])
-                    PRICES[coin]["Kraken"] = price
+                    PRICES[coin]["Kraken"] = float(msg[1]["c"][0])
